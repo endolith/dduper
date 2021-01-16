@@ -12,7 +12,6 @@ This hugely improves the performance.
 """
 import argparse
 import hashlib
-import numpy as np
 import os
 import struct
 import subprocess
@@ -218,17 +217,16 @@ def do_dedupe(src_file, dst_file, dry_run):
         dst_dict, dst_ccount = get_hashes(out2)
 
     total_entry = len(src_dict) - 1  # Fix missing final ele
-    np1 = np.array([v for v in src_dict.keys()])
-    np2 = np.array([v for v in dst_dict.keys()])
-    matched_keys = np.intersect1d(np1, np2)
-    unmatched_keys = np.setdiff1d(np2, np1)
+
+    matched_keys = src_dict.keys() & dst_dict.keys()
+    unmatched_keys = src_dict.keys() ^ dst_dict.keys()
     total_bytes_deduped = 0
 
     if not dry_run:
-        # todo: Clear dict/np/list if there are not used further
+        # todo: Clear dict/list if there are not used further
         # todo : handle same content within single file
 
-        if matched_keys is not None:
+        if matched_keys:
             if not skip:
                 bkup2 = subprocess.Popen(
                     ['cp', '--reflink=always', dst_file, bkup_file],
