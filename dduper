@@ -68,7 +68,8 @@ def get_ele_size(chunk_sz):
 
 def get_hashes(out1):
     """
-       For each list item compute its hash and store it with offset as its key.
+    For each list item, compute its hash and store it as key, with offsets as
+    value.
     """
     global ele_sz
     ccount = 0
