@@ -82,7 +82,7 @@ def get_hashes(out1):
             k = hashlib.sha256(str(ele).encode('utf-8')).hexdigest()
             v.append(idx)
             if k in od:
-                if verbose is True:
+                if verbose:
                     print("Collision with: " + str(k) + "at offset: " + str(v))
                 # Get previous value
                 v.extend(od.get(k))
@@ -95,7 +95,7 @@ def get_hashes(out1):
             k = hashlib.sha256(str(ele).encode('utf-8')).hexdigest()
             v.append(idx)
             if k in od:
-                if verbose is True:
+                if verbose:
                     print("Collision with: " + str(k) + "at offset: " + str(v))
                 # Get previous value
                 v.extend(od.get(k))
@@ -142,7 +142,7 @@ def auto_adjust_chunk_sz(src_file_sz, analyze):
     global chunk_sz, ele_sz
 
     # Dont change chunk_sz for --analyze option
-    if analyze is True:
+    if analyze:
        return chunk_sz, ele_sz
     # automatically change chunk size in case of perfect match.
     fz_kb = src_file_sz >> 10
@@ -176,7 +176,7 @@ def btrfs_dump_csum(filename):
     global device_name
 
     btrfs_bin = "/usr/sbin/btrfs.static"
-    if os.path.exists(btrfs_bin) is False:
+    if not os.path.exists(btrfs_bin):
         btrfs_bin = "btrfs"
 
     out = subprocess.Popen(
@@ -224,12 +224,12 @@ def do_dedupe(src_file, dst_file, dry_run):
     unmatched_keys = np.setdiff1d(np2, np1)
     total_bytes_deduped = 0
 
-    if dry_run is False:
+    if not dry_run:
         # todo: Clear dict/np/list if there are not used further
         # todo : handle same content within single file
 
         if matched_keys is not None:
-            if skip is False:
+            if not skip:
                 bkup2 = subprocess.Popen(
                     ['cp', '--reflink=always', dst_file, bkup_file],
                     stdout=subprocess.PIPE)
@@ -248,7 +248,7 @@ def do_dedupe(src_file, dst_file, dry_run):
                     if entry == total_entry:  # fix final ele
                         src_len = src_file_sz - src_offset
                     # print("matching chunk : src offset:"+str(src_offset) +" src_len="+ str(src_len) +" dest_off="+ str(dst_offset))
-                    if fast_mode is True:
+                    if fast_mode:
                         s = struct.pack("qQQQ", src_fd, src_offset, src_len,
                                         dst_offset)
                         ioctl_ficlonerange(dst_fd, s)
@@ -266,7 +266,7 @@ def do_dedupe(src_file, dst_file, dry_run):
             print("Dedupe completed for " + src_file + ":" + dst_file)
 
             # Verify original unmodified file and newly deduped file both point to same contents
-            if skip is False:
+            if not skip:
                 validate_results(src_file, dst_file, bkup_file)
 
     # Close open fds
@@ -298,7 +298,7 @@ def display_summary(blk_size, chunk_sz, perfect_match_chunk_sz, src_file,
     for k in unmatched_keys:
         unmatched_chunks += len(dst_dict.get(k))
 
-    if analyze is False:
+    if not analyze:
         print("Summary")
         print("blk_size : %dKB  chunksize : %dKB" % (blk_size, chunk))
         if src_ccount == 0:
@@ -316,9 +316,9 @@ def display_summary(blk_size, chunk_sz, perfect_match_chunk_sz, src_file,
 
     avail_dedupe = matched_chunks * chunk
 
-    if dry_run is False:
+    if not dry_run:
         print("Total size(KB) deduped: " + str(total_bytes_deduped // 1024))
-    elif analyze is False:
+    elif not analyze:
         print("Total size(KB) available for dedupe: %d " % (avail_dedupe))
 
     if dst_file_sz == (avail_dedupe * 1024):
@@ -326,7 +326,7 @@ def display_summary(blk_size, chunk_sz, perfect_match_chunk_sz, src_file,
         # override perfect match to remove this whole file.
         perfect_match = True
 
-    if analyze is True:
+    if analyze:
         if chunk_sz in analyze_dict:
             v = analyze_dict[chunk_sz]
         else:
@@ -367,7 +367,7 @@ def validate_files(src_file, dst_file, processed_files):
         # and (src_stat.st_size >= run_len)
         # and (dst_stat.st_size >= run_len)):
         return True
-    if verbose is True:
+    if verbose:
         print("Skipped", src_file, dst_file, "not unique regular files or \
                file size < 4kb")
     return False
@@ -379,14 +379,14 @@ def dedupe_files(file_list, dry_run):
     if len(file_list) == 2:
         src_file = file_list[0]
         dst_file = file_list[1]
-        if validate_files(src_file, dst_file, processed_files) is True:
+        if validate_files(src_file, dst_file, processed_files):
             ret = do_dedupe(src_file, dst_file, dry_run)
     elif len(file_list) > 2:
         comb = combinations(file_list, 2)
         for f in comb:
             src_file = f[0]
             dst_file = f[1]
-            if validate_files(src_file, dst_file, processed_files) is True:
+            if validate_files(src_file, dst_file, processed_files):
                 # print src_file + " <-Dedupe-> " + dst_file
                 ret = do_dedupe(src_file, dst_file, dry_run)
                 # pdb.set_trace()
@@ -404,7 +404,7 @@ def dedupe_files(file_list, dry_run):
 
 def validate_file(filename):
     global run_len
-    if os.path.exists(filename) is False:
+    if not os.path.exists(filename):
         return False
     file_stat = os.stat(filename)
     # Verify its a unique regular file
@@ -412,7 +412,7 @@ def validate_file(filename):
         # and (file_stat.st_size >= run_len)):
         return True
     else:
-        if verbose is True:
+        if verbose:
             print("Skipped", filename, "not unique regular files or \
                 file size < 4kb ")
         return False
@@ -420,19 +420,19 @@ def validate_file(filename):
 
 def dedupe_dir(dir_path, dry_run, recurse):
     file_list = []
-    if recurse is True:
+    if recurse:
         for dirname in dir_path:
             for path, dirs, files in os.walk(dirname):
                 for filename in files:
                     fn = os.path.join(path, filename)
-                    if validate_file(fn) is True:
+                    if validate_file(fn):
                         file_list.append(fn)
     else:
         for dirname in dir_path:
             for fi in os.listdir(dirname):
                 if os.path.isfile(os.path.join(dirname, fi)):
                     fn = os.path.join(dirname, fi)
-                    if validate_file(fn) is True:
+                    if validate_file(fn):
                         file_list.append(fn)
     dedupe_files(file_list, dry_run)
 
@@ -544,10 +544,10 @@ if __name__ == '__main__':
     ele_sz = get_ele_size(chunk_sz)
     verbose = results.verbose
     start = timer()
-    if fast_mode is False:
+    if not fast_mode:
         skip = True
 
-    if results.analyze is True:
+    if results.analyze:
         results.dry_run = True
         analyze = True
         for sz in 128, 256, 512, 1024, 2048, 4096, 8192, 16384:
