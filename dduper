@@ -75,31 +75,21 @@ def get_hashes(out1):
 
     # print("Running with ele_sz " + str(ele_sz))
     if ele_sz == 1:
-        od = OrderedDict()
-        for idx, ele in enumerate(out1):
-            v = []
-            k = hashlib.sha256(str(ele).encode('utf-8')).hexdigest()
-            v.append(idx)
-            if k in od:
-                if verbose:
-                    print("Collision with: " + str(k) + "at offset: " + str(v))
-                # Get previous value
-                v.extend(od.get(k))
-                ccount += 1
-            od[k] = v
+        csum_dump = enumerate(out1)
     else:
-        od = OrderedDict()
-        for idx, ele in enumerate(grouper(out1, ele_sz, 'x')):
-            v = []
-            k = hashlib.sha256(str(ele).encode('utf-8')).hexdigest()
-            v.append(idx)
-            if k in od:
-                if verbose:
-                    print("Collision with: " + str(k) + "at offset: " + str(v))
-                # Get previous value
-                v.extend(od.get(k))
-                ccount += 1
-            od[k] = v
+        csum_dump = enumerate(grouper(out1, ele_sz, 'x'))
+    od = OrderedDict()
+    for idx, ele in csum_dump:
+        v = []
+        k = hashlib.sha256(str(ele).encode('utf-8')).hexdigest()
+        v.append(idx)
+        if k in od:
+            if verbose:
+                print("Collision with: " + str(k) + "at offset: " + str(v))
+            # Get previous value
+            v.extend(od.get(k))
+            ccount += 1
+        od[k] = v
 
     return od, ccount
 
