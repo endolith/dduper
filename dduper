@@ -11,12 +11,9 @@ This hugely improves the performance.
 
 """
 import argparse
-import errno
 import hashlib
 import numpy as np
-import math
 import os
-import pdb
 import struct
 import subprocess
 import sys
@@ -25,7 +22,7 @@ from collections import OrderedDict
 from fcntl import ioctl
 from itertools import combinations
 from itertools import zip_longest
-from stat import *
+from stat import S_ISREG
 from timeit import default_timer as timer
 from filecmp import cmp
 from prettytable import PrettyTable
