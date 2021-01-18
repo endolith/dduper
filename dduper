@@ -102,7 +102,7 @@ def ioctl_fideduperange(src_fd, s):
 
     try:
         v = ioctl(src_fd, FIDEDUPERANGE, s)
-        _,_,_,_,_,_,_,bytes_dup,status,_ = struct.unpack("QQHHIqQQiH",v)
+        bytes_dup, status = struct.unpack("QQHHIqQQiH", v)[7:9]
         return bytes_dup,status
     except Exception as e:
         print("error({0})".format(e))
