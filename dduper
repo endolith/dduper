@@ -90,20 +90,22 @@ def get_hashes(out1):
     return od, ccount
 
 
-def ioctl_ficlonerange(dst_fd, s):
-
+def ioctl_ficlonerange(dst_fd, src_fd, src_offset, src_len, dst_offset):
+    s = struct.pack("qQQQ", src_fd, src_offset, src_len,
+                dst_offset)
     try:
         ioctl(dst_fd, FICLONERANGE, s)
     except Exception as e:
         print("error({0})".format(e))
 
 
-def ioctl_fideduperange(src_fd, s):
-
+def ioctl_fideduperange(src_fd, src_offset, src_len, dst_fd, dst_offset):
+    s = struct.pack("QQHHIqQQiH", src_offset, src_len, 1, 0, 0, dst_fd,
+                    dst_offset, 0, 0, 0)
     try:
         v = ioctl(src_fd, FIDEDUPERANGE, s)
         bytes_dup, status = struct.unpack("QQHHIqQQiH", v)[7:9]
-        return bytes_dup,status
+        return bytes_dup, status
     except Exception as e:
         print("error({0})".format(e))
 
@@ -235,17 +237,10 @@ def do_dedupe(src_file, dst_file, dry_run):
                         src_len = src_file_sz - src_offset
                     # print("matching chunk : src offset:"+str(src_offset) +" src_len="+ str(src_len) +" dest_off="+ str(dst_offset))
                     if fast_mode:
-                        s = struct.pack("qQQQ", src_fd, src_offset, src_len,
-                                        dst_offset)
-                        ioctl_ficlonerange(dst_fd, s)
+                        ioctl_ficlonerange(dst_fd, src_fd, src_offset, src_len, dst_offset)
                         total_bytes_deduped += src_len
                     else:
-                        bytes_deduped = 0
-                        status = 0
-                        s = struct.pack("QQHHIqQQiH", src_offset, src_len, 1,
-                                        0, 0, dst_fd, dst_offset,
-                                        bytes_deduped, status, 0)
-                        bytes_deduped,status = ioctl_fideduperange(src_fd, s)
+                        bytes_deduped, status = ioctl_fideduperange(src_fd, src_offset, src_len, dst_fd, dst_offset)
                         total_bytes_deduped += bytes_deduped
                         #print("\n bytes_deduped= %d %d " % (bytes_deduped, status))
 
