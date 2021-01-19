@@ -73,10 +73,7 @@ def get_hashes(out1):
     ccount = 0
 
     # print("Running with ele_sz " + str(ele_sz))
-    if ele_sz == 1:
-        csum_dump = enumerate(out1)
-    else:
-        csum_dump = enumerate(grouper(out1, ele_sz, 'x'))
+    csum_dump = enumerate(grouper(out1, ele_sz, 'x'))
     od = OrderedDict()
     for idx, ele in csum_dump:
         v = []
