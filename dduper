@@ -171,6 +171,8 @@ def btrfs_dump_csum(filename):
         [btrfs_bin, 'inspect-internal', 'dump-csum', filename, device_name],
         stdout=subprocess.PIPE,
         close_fds=True).stdout.readlines()
+
+    out = [x.strip() for x in out]
     return out
 
 
